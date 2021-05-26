@@ -16,7 +16,6 @@ def defineFlags():
   parser.add_argument(
       '-v', '--verbosity',
       action='store',
-      nargs=1,
       default=20,
       type=int,
       help='the logging verbosity',
@@ -120,7 +119,7 @@ class Replacer(object):
       new_file_contents = file_contents.replace(search, replacement)
 
     if file_contents == new_file_contents:
-      logging.warn('Nothing replaced: %s', file_path)
+      logging.warning('Nothing replaced: %s', file_path)
       return True
 
     if self.args.backup and self.args.backup_format:
