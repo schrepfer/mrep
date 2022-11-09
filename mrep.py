@@ -3,6 +3,7 @@
 """My REPlace (MREP): Replaces occurrences of text within a file."""
 
 import argparse
+import itertools
 import logging
 import os
 import re
@@ -48,7 +49,8 @@ def defineFlags():
       help='only pretend to do the replacements')
   parser.add_argument(
       '-f', '--flags',
-      choices={
+      action='append',
+      choices=[
           're.ASCII',      're.A',
           're.DEBUG',
           're.DOTALL',     're.S',
@@ -57,8 +59,8 @@ def defineFlags():
           're.MULTILINE',  're.M',
           're.NOFLAG',
           're.VERBOSE',    're.X',
-      },
-      nargs='*',
+      ],
+      nargs=1,
       type=str,
       metavar='RegexFlag',
       help='See https://docs.python.org/3/library/re.html#re.RegexFlag for options')
@@ -106,7 +108,7 @@ def checkFlags(parser, args):
 
 def regexpFlags(args):
   flags = 0
-  for f in args.flags:
+  for f in itertools.chain.from_iterable(args.flags):
     flags |= eval(f).value
   return flags
 

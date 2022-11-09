@@ -4,6 +4,8 @@ My REPlace (MREP): Replaces occurrences of text within a file.
 ## Usage
 
 ```
+usage: mrep.py [-h] [-v LEVEL] [-V] [-b] [--backup_format FORMAT] [-r] [-n] [-f RegexFlag] [-e] SEARCH REPLACEMENT FILE [FILE ...]
+
 My REPlace (MREP): Replaces occurrences of text within a file.
 
 positional arguments:
@@ -22,7 +24,7 @@ options:
   -r, --regexp, --regex, --re
                         make the search string a regexp pattern
   -n, --pretend         only pretend to do the replacements
-  -f [RegexFlag ...], --flags [RegexFlag ...]
+  -f RegexFlag, --flags RegexFlag
                         See https://docs.python.org/3/library/re.html#re.RegexFlag for options
   -e, --backslash       enable usage of backslash escapes
 ```
