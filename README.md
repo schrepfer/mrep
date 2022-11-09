@@ -30,7 +30,7 @@ options:
                         'choices': None, 'required': False, 'help': 'Backup
                         files in this format; %s is expanded to the current
                         file name.', 'metavar': 'FORMAT', 'container':
-                        <argparse._ArgumentGroup object at 0x7f05b11b2770>,
+                        <argparse._ArgumentGroup object at 0x7f339c156890>,
                         'prog': 'mrep.py'} is expanded to the current file
                         name.
   -r, --regexp, --regex, --re
@@ -38,14 +38,14 @@ options:
                         option you can use regexp capturing groups, and
                         reference those values in the replacement with \1, \2,
                         etc.
-  -n, --pretend         Only pretend to do the replacements, but do not
-                        actually do it.
+  -n, --diff            Diff the proposed changes only. Do not actually touch
+                        the files.
   -f RegexFlag, --flags RegexFlag
                         See
                         https://docs.python.org/3/library/re.html#re.RegexFlag
                         for options. RegexFlags: re.ASCII, re.DEBUG,
                         re.DOTALL, re.IGNORECASE, re.LOCALE, re.MULTILINE,
                         re.NOFLAG, re.VERBOSE
-  -e, --backslash       Enable usage of backslash escapes. Useful if you want
+  -e, --escape          Enable usage of backslash escapes. Useful if you want
                         to replace \r, etc.
 ```

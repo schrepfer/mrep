@@ -76,7 +76,7 @@ def defineFlags() -> argparse.Namespace:
           'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagsChoices))),
   )
   parser.add_argument(
-      '-e', '--backslash',
+      '-e', '--escape',
       action='store_true',
       default=False,
       help='Enable usage of backslash escapes. Useful if you want to replace \\r, etc.',
@@ -155,7 +155,7 @@ class Replacer(object):
     search: str = self.args.search[0]
     replacement: str = self.args.replacement[0]
 
-    if self.args.backslash:
+    if self.args.escape:
       search = search.encode('utf-8').decode('unicode_escape')
       replacement = replacement.encode('utf-8').decode('unicode_escape')
 
