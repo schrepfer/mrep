@@ -65,6 +65,13 @@ def defineFlags() -> argparse.Namespace:
       help='Diff the proposed changes only. Do not actually touch the files.',
   )
   parser.add_argument(
+      '--diff_context',
+      action='store',
+      default=3,
+      type=int,
+      help='The amount of context to show in unified diffs.',
+  )
+  parser.add_argument(
       '-f', '--flags',
       action='append',
       choices=flagsChoices,
@@ -184,6 +191,7 @@ class Replacer(object):
           new_file_contents.split('\n'),
           fromfile='before',
           tofile='after',
+          n=self.args.diff_context,
       )))
       return True
 

@@ -5,7 +5,7 @@ My REPlace (MREP): Replaces occurrences of text within a file.
 
 ```
 usage: mrep.py [-h] [-v LEVEL] [-V] [-b] [--backup_format FORMAT] [-r] [-n]
-               [-f RegexFlag] [-e]
+               [--diff_context DIFF_CONTEXT] [-f RegexFlag] [-e]
                SEARCH REPLACEMENT FILE [FILE ...]
 
 My REPlace (MREP): Replaces occurrences of text within a file.
@@ -33,6 +33,8 @@ options:
                         etc.
   -n, --diff            Diff the proposed changes only. Do not actually touch
                         the files.
+  --diff_context DIFF_CONTEXT
+                        The amount of context to show in unified diffs.
   -f RegexFlag, --flags RegexFlag
                         See
                         https://docs.python.org/3/library/re.html#re.RegexFlag
