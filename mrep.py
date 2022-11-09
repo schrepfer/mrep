@@ -48,7 +48,7 @@ def defineFlags() -> argparse.Namespace:
       action='store',
       default='%s~',
       type=str,
-      help='Backup files in this format; %s is expanded to the current file name.',
+      help='Backup files in this format; %%s is expanded to the current file name.',
       metavar='FORMAT')
   parser.add_argument(
       '-r', '--regexp', '--regex', '--re',

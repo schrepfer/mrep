@@ -24,15 +24,8 @@ options:
   -b, --backup          Backup files being modified. See --backup_format for
                         options on the format.
   --backup_format FORMAT
-                        Backup files in this format; {'option_strings': ['--
-                        backup_format'], 'dest': 'backup_format', 'nargs':
-                        None, 'const': None, 'default': '%s~', 'type': 'str',
-                        'choices': None, 'required': False, 'help': 'Backup
-                        files in this format; %s is expanded to the current
-                        file name.', 'metavar': 'FORMAT', 'container':
-                        <argparse._ArgumentGroup object at 0x7f339c156890>,
-                        'prog': 'mrep.py'} is expanded to the current file
-                        name.
+                        Backup files in this format; %s is expanded to the
+                        current file name.
   -r, --regexp, --regex, --re
                         Make the search string a regexp pattern. With this
                         option you can use regexp capturing groups, and
