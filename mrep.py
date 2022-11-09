@@ -37,7 +37,7 @@ def defineFlags():
       help='backup files in this format; %%s is expanded',
       metavar='FORMAT')
   parser.add_argument(
-      '-r', '--regexp',
+      '-r', '--regexp', '--regex', '--re',
       action='store_true',
       default=False,
       help='make the search string a regexp pattern')
@@ -46,6 +46,22 @@ def defineFlags():
       action='store_true',
       default=False,
       help='only pretend to do the replacements')
+  parser.add_argument(
+      '-f', '--flags',
+      choices={
+          're.ASCII',      're.A',
+          're.DEBUG',
+          're.DOTALL',     're.S',
+          're.IGNORECASE', 're.I',
+          're.LOCALE',     're.L',
+          're.MULTILINE',  're.M',
+          're.NOFLAG',
+          're.VERBOSE',    're.X',
+      },
+      nargs='*',
+      type=str,
+      metavar='RegexFlag',
+      help='See https://docs.python.org/3/library/re.html#re.RegexFlag for options')
   parser.add_argument(
       '-e', '--backslash',
       action='store_true',
@@ -84,12 +100,23 @@ def checkFlags(parser, args):
   if args.search == args.replacement and not args.regexp:
     parser.error('SEARCH and REPLACEMENT must be different')
 
+  if len(args.flags) and not args.regexp:
+    parser.error('--flags specified but --regexp is not')
+
+
+def regexpFlags(args):
+  flags = 0
+  for f in args.flags:
+    flags |= eval(f).value
+  return flags
+
 
 class Replacer(object):
   """Replacer keeps state and replaces content in files."""
 
   def __init__(self, args):
     self.args = args
+    self.flags = regexpFlags(args)
 
   def replaceOne(self, file_path):
     """Replace text in the given file."""
@@ -98,13 +125,11 @@ class Replacer(object):
       return False
 
     try:
-      file_handle = open(file_path, 'r')
+      with open(file_path, 'r') as file_handle:
+        file_contents = file_handle.read()
     except:
       logging.error('Could not open file for reading: %s', file_path)
       return False
-
-    with file_handle:
-      file_contents = file_handle.read()
 
     search = self.args.search[0]
     replacement = self.args.replacement[0]
@@ -114,7 +139,7 @@ class Replacer(object):
       replacement = replacement.decode('string_escape')
 
     if self.args.regexp:
-      new_file_contents = re.sub(search, replacement, file_contents)
+      new_file_contents = re.sub(search, replacement, file_contents, flags=self.flags)
     else:
       new_file_contents = file_contents.replace(search, replacement)
 
