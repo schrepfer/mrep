@@ -68,6 +68,7 @@ def defineFlags() -> argparse.Namespace:
       '-f', '--flags',
       action='append',
       choices=flagsChoices,
+      default=[],
       nargs=1,
       type=str,
       metavar='RegexFlag',
