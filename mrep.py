@@ -12,7 +12,7 @@ import shutil
 import sys
 
 
-flagsChoices = [
+flagChoices = [
     're.ASCII',      're.A',
     're.DEBUG',
     're.DOTALL',     're.S',
@@ -50,8 +50,7 @@ def defineFlags() -> argparse.Namespace:
       type=str,
       help='Backup files in this format; %%s is expanded to the current file name.',
       metavar='FORMAT')
-  parser.add_argument(
-      '-r', '--regexp', '--regex', '--re',
+  parser.add_argument( '-r', '--regexp', '--regex', '--re',
       action='store_true',
       default=False,
       help=(
@@ -72,16 +71,16 @@ def defineFlags() -> argparse.Namespace:
       help='The amount of context to show in unified diffs.',
   )
   parser.add_argument(
-      '-f', '--flags',
+      '-f', '--flag',
       action='append',
-      choices=flagsChoices,
+      choices=flagChoices,
       default=[],
       nargs=1,
       type=str,
       metavar='RegexFlag',
       help=(
           'See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
-          'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagsChoices))),
+          'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagChoices))),
   )
   parser.add_argument(
       '-e', '--escape',
@@ -126,13 +125,13 @@ def checkFlags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> Non
   if args.search == args.replacement and not args.regexp:
     parser.error('SEARCH and REPLACEMENT must be different')
 
-  if len(args.flags) and not args.regexp:
-    parser.error('--flags specified but --regexp is not')
+  if len(args.flag) and not args.regexp:
+    parser.error('--flag specified but --regexp is not')
 
 
 def regexpFlags(args: argparse.Namespace) -> int:
   flags = 0
-  for f in itertools.chain.from_iterable(args.flags):
+  for f in itertools.chain.from_iterable(args.flag):
     flags |= eval(f).value
   return flags
 

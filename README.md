@@ -35,7 +35,7 @@ options:
                         the files.
   --diff_context DIFF_CONTEXT
                         The amount of context to show in unified diffs.
-  -f RegexFlag, --flags RegexFlag
+  -f RegexFlag, --flag RegexFlag
                         See
                         https://docs.python.org/3/library/re.html#re.RegexFlag
                         for options. RegexFlags: re.ASCII, re.DEBUG,
