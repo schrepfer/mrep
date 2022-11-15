@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 
-"""My REPlace (MREP): Replaces occurrences of text within a file."""
+"""My REPlace (MREP): Replaces occurrences of text within a file.
+
+Examples:
+
+  Diff a delete (-n) any lines with `split_tests` from Manifest files (and preceeding comments):
+    find -type f -name '*.manifest' -print0 | xargs -L50 -- \
+        mrep -n -r -f re.MULTILINE '(\s+#.*$)*\s+split_tests\s*=\s*\d+,.*$' ''
+
+  Replace simple string in all Go files in current directory (and back them up with `.old` suffix):
+    mrep -b --backup_format='%s.old' 'spec.Run()' 'setup.RunSpec(ctx, p.Opts, spec)' *.go
+"""
 
 import argparse
 import difflib
@@ -38,6 +48,7 @@ def defineFlags() -> argparse.Namespace:
       '-V', '--version',
       action='version',
       version='%(prog)s version 0.2')
+  # Backup
   parser.add_argument(
       '-b', '--backup',
       action='store_true',
@@ -50,13 +61,7 @@ def defineFlags() -> argparse.Namespace:
       type=str,
       help='Backup files in this format; %%s is expanded to the current file name.',
       metavar='FORMAT')
-  parser.add_argument( '-r', '--regexp', '--regex', '--re',
-      action='store_true',
-      default=False,
-      help=(
-          'Make the search string a regexp pattern. With this option you can use regexp capturing '
-          r'groups, and reference those values in the replacement with \1, \2, etc.'),
-  )
+  # Diff
   parser.add_argument(
       '-n', '--diff',
       action='store_true',
@@ -70,6 +75,14 @@ def defineFlags() -> argparse.Namespace:
       type=int,
       help='The amount of context to show in unified diffs.',
   )
+  # Regexp
+  parser.add_argument( '-r', '--regexp', '--regex', '--re',
+      action='store_true',
+      default=False,
+      help=(
+          'Make the search string a regexp pattern. With this option you can use regexp capturing '
+          r'groups, and reference those values in the replacement with \1, \2, etc.'),
+  )
   parser.add_argument(
       '-f', '--flag',
       action='append',
@@ -82,12 +95,14 @@ def defineFlags() -> argparse.Namespace:
           'See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
           'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagChoices))),
   )
+  # Misc patterns
   parser.add_argument(
       '-e', '--escape',
       action='store_true',
       default=False,
       help='Enable usage of backslash escapes. Useful if you want to replace \\r, etc.',
   )
+  # Replacements
   parser.add_argument(
       'search',
       nargs=1,
@@ -104,6 +119,7 @@ def defineFlags() -> argparse.Namespace:
           r'\1, \2, etc.'),
       metavar='REPLACEMENT',
   )
+  # Files
   parser.add_argument(
       'files',
       nargs='+',
@@ -123,10 +139,10 @@ def checkFlags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> Non
     parser.error('--backup_format must contain %s exactly once')
 
   if args.search == args.replacement and not args.regexp:
-    parser.error('SEARCH and REPLACEMENT must be different')
+    parser.error('SEARCH and REPLACEMENT should (and must) be different')
 
   if len(args.flag) and not args.regexp:
-    parser.error('--flag specified but --regexp is not')
+    parser.error('--flag specified but --regexp is not (and required)')
 
 
 def regexpFlags(args: argparse.Namespace) -> int:
