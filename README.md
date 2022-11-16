@@ -52,7 +52,7 @@ options:
     at a time.
 
     ```
-     find -type f -name '*.manifest' -print0 | xargs -L50 -- \
+     find -type f -name '*.manifest' -print0 | xargs -0 -L50 -- \
            mrep -n -r -f re.MULTILINE '(\s+#.*$)*\s+split_tests\s*=\s*\d+,.*$' ''
     ```
 
