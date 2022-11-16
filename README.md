@@ -47,8 +47,9 @@ options:
 
 ## Examples
 
-1.  Diff a delete (-n) any lines with `split_tests` from Manifest files (and
-    preceeding comments):
+1.  Diff (`-n`) a delete of lines with `split_tests` from *.manifest files (and
+    the preceeding comments). The `xargs` command will batch up 50 replacements
+    at a time.
 
     ```
      find -type f -name '*.manifest' -print0 | xargs -L50 -- \
@@ -56,7 +57,7 @@ options:
     ```
 
 1.  Replace simple string in all Go files in current directory (and back them up
-    with `.old` suffix):
+    with `.old` suffix).
 
     ```
      mrep -b --backup_format='%s.old' 'spec.Run()' 'setup.RunSpec(ctx, p.Opts, spec)' *.go
