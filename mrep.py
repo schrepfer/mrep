@@ -42,25 +42,29 @@ def defineFlags() -> argparse.Namespace:
       action='store',
       default=20,
       type=int,
+      metavar='LEVEL',
       help='The logging verbosity.',
-      metavar='LEVEL')
+  )
   parser.add_argument(
       '-V', '--version',
       action='version',
-      version='%(prog)s version 0.2')
+      version='%(prog)s version 0.2',
+  )
   # Backup
   parser.add_argument(
       '-b', '--backup',
       action='store_true',
       default=False,
-      help='Backup files being modified. See --backup_format for options on the format.')
+      help='Backup files being modified. See --backup_format for options on the format.',
+  )
   parser.add_argument(
       '--backup_format',
       action='store',
       default='%s~',
       type=str,
+      metavar='FORMAT',
       help='Backup files in this format; %%s is expanded to the current file name.',
-      metavar='FORMAT')
+  )
   # Diff
   parser.add_argument(
       '-n', '--diff',
@@ -73,15 +77,16 @@ def defineFlags() -> argparse.Namespace:
       action='store',
       default=3,
       type=int,
+      METAVAR='LINES',
       help='The amount of context to show in unified diffs.',
   )
   # Regexp
   parser.add_argument( '-r', '--regexp', '--regex', '--re',
       action='store_true',
       default=False,
-      help=(
-          'Make the search string a regexp pattern. With this option you can use regexp capturing '
-          r'groups, and reference those values in the replacement with \1, \2, etc.'),
+      help=('Make the search string a regexp pattern. With this option you can use regexp '
+            'capturing groups, and reference those values in the replacement with '
+            r'\1, \2, etc.'),
   )
   parser.add_argument(
       '-f', '--flag',
@@ -91,9 +96,8 @@ def defineFlags() -> argparse.Namespace:
       nargs=1,
       type=str,
       metavar='RegexFlag',
-      help=(
-          'See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
-          'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagChoices))),
+      help=('See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
+            'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagChoices))),
   )
   # Misc patterns
   parser.add_argument(
@@ -107,25 +111,24 @@ def defineFlags() -> argparse.Namespace:
       'search',
       nargs=1,
       type=str,
-      help='Search string or pattern.',
       metavar='SEARCH',
+      help='Search string or pattern.',
   )
   parser.add_argument(
       'replacement',
       nargs=1,
       type=str,
-      help=(
-          'Replacement string. If --regexp is enabled, you can reference capturing groups with '
-          r'\1, \2, etc.'),
       metavar='REPLACEMENT',
+      help=('Replacement string. If --regexp is enabled, you can reference capturing groups with '
+            r'\1, \2, etc.'),
   )
   # Files
   parser.add_argument(
       'files',
       nargs='+',
       type=str,
-      help='Files to consider in the search replacement.',
       metavar='FILE',
+      help='Files to consider in the search replacement.',
   )
 
   args = parser.parse_args()
