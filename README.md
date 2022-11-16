@@ -4,8 +4,8 @@ My REPlace (MREP): Replaces occurrences of text within a file.
 ## Usage
 
 ```
-usage: mrep.py [-h] [-v LEVEL] [-V] [-b] [--backup_format FORMAT] [-r] [-n]
-               [--diff_context DIFF_CONTEXT] [-f RegexFlag] [-e]
+usage: mrep.py [-h] [-v LEVEL] [-V] [-b] [--backup_format FORMAT] [-n]
+               [--diff_context LINES] [-r] [-f RegexFlag] [-e]
                SEARCH REPLACEMENT FILE [FILE ...]
 
 My REPlace (MREP): Replaces occurrences of text within a file.
@@ -26,15 +26,14 @@ options:
   --backup_format FORMAT
                         Backup files in this format; %s is expanded to the
                         current file name.
+  -n, --diff            Diff the proposed changes only. Do not actually touch
+                        the files.
+  --diff_context LINES  The amount of context to show in unified diffs.
   -r, --regexp, --regex, --re
                         Make the search string a regexp pattern. With this
                         option you can use regexp capturing groups, and
                         reference those values in the replacement with \1, \2,
                         etc.
-  -n, --diff            Diff the proposed changes only. Do not actually touch
-                        the files.
-  --diff_context DIFF_CONTEXT
-                        The amount of context to show in unified diffs.
   -f RegexFlag, --flag RegexFlag
                         See
                         https://docs.python.org/3/library/re.html#re.RegexFlag
@@ -44,3 +43,18 @@ options:
   -e, --escape          Enable usage of backslash escapes. Useful if you want
                         to replace \r, etc.
 ```
+
+## Examples
+
+  1. Diff a delete (-n) any lines with `split_tests` from Manifest files (and preceeding comments):
+
+     ```
+     find -type f -name '*.manifest' -print0 | xargs -L50 -- \
+           mrep -n -r -f re.MULTILINE '(\s+#.*$)*\s+split_tests\s*=\s*\d+,.*$' ''
+     ```
+
+  1. Replace simple string in all Go files in current directory (and back them up with `.old` suffix):
+
+     ```
+     mrep -b --backup_format='%s.old' 'spec.Run()' 'setup.RunSpec(ctx, p.Opts, spec)' *.go
+     ```
