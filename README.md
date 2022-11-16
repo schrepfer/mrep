@@ -1,4 +1,5 @@
 # mrep
+
 My REPlace (MREP): Replaces occurrences of text within a file.
 
 ## Usage
@@ -46,15 +47,17 @@ options:
 
 ## Examples
 
-  1. Diff a delete (-n) any lines with `split_tests` from Manifest files (and preceeding comments):
+1.  Diff a delete (-n) any lines with `split_tests` from Manifest files (and
+    preceeding comments):
 
-     ```
+    ```
      find -type f -name '*.manifest' -print0 | xargs -L50 -- \
            mrep -n -r -f re.MULTILINE '(\s+#.*$)*\s+split_tests\s*=\s*\d+,.*$' ''
-     ```
+    ```
 
-  1. Replace simple string in all Go files in current directory (and back them up with `.old` suffix):
+1.  Replace simple string in all Go files in current directory (and back them up
+    with `.old` suffix):
 
-     ```
+    ```
      mrep -b --backup_format='%s.old' 'spec.Run()' 'setup.RunSpec(ctx, p.Opts, spec)' *.go
-     ```
+    ```
