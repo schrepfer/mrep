@@ -118,7 +118,7 @@ def defineFlags() -> argparse.Namespace:
   # Files
   parser.add_argument(
       'files',
-      nargs='+',
+      nargs='*',
       type=str,
       metavar='FILE',
       default=['-'],
