@@ -4,12 +4,15 @@
 
 import argparse
 import difflib
+import io
 import itertools
 import logging
 import os
 import re
 import shutil
 import sys
+
+from typing import Callable, TextIO
 
 
 flagChoices = [
@@ -30,7 +33,7 @@ def defineFlags() -> argparse.Namespace:
   parser.add_argument(
       '-v', '--verbosity',
       action='store',
-      default=20,
+      default=logging.WARNING,
       type=int,
       metavar='LEVEL',
       help='The logging verbosity.',
@@ -118,6 +121,7 @@ def defineFlags() -> argparse.Namespace:
       nargs='+',
       type=str,
       metavar='FILE',
+      default=['-'],
       help='Files to consider in the search replacement.',
   )
 
@@ -137,12 +141,19 @@ def checkFlags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> Non
   if len(args.flag) and not args.regexp:
     parser.error('--flag specified but --regexp is not (and required)')
 
+  if len(args.files) > 1 and isStdin(args.files[0]):
+    parser.error('FILES contains stdin and must contain exactly one entry')
+
 
 def regexpFlags(args: argparse.Namespace) -> int:
   flags = 0
   for f in itertools.chain.from_iterable(args.flag):
     flags |= eval(f).value
   return flags
+
+
+def isStdin(file_path: str) -> bool:
+  return file_path in {'/dev/stdin', '-'}
 
 
 class Replacer(object):
@@ -157,16 +168,24 @@ class Replacer(object):
 
   def replaceOne(self, file_path: str) -> bool:
     """Replace text in the given file."""
-    if not os.path.isfile(file_path):
-      logging.error('Not a valid/readable file: %s', file_path)
-      return False
+    file_contents: str
+    output_fn: Callable[[], TextIO]
+    file_handle: TextIO
 
-    try:
-      with open(file_path, 'r') as file_handle:
-        file_contents: str = file_handle.read()
-    except:
-      logging.error('Could not open file for reading: %s', file_path)
-      return False
+    if isStdin(file_path):
+      file_contents = sys.stdin.read()
+      output_fn = lambda: sys.stdout
+    else:
+      if not os.path.isfile(file_path):
+        logging.error('Not a valid/readable file: %s', file_path)
+        return False
+      try:
+        with open(file_path, 'r') as file_handle:
+          file_contents = file_handle.read()
+        output_fn = lambda: open(file_path, 'w')
+      except:
+        logging.error('Could not open file for reading: %s', file_path)
+        return False
 
     search: str = self.args.search[0]
     replacement: str = self.args.replacement[0]
@@ -204,7 +223,7 @@ class Replacer(object):
       return True
 
     try:
-      file_handle = open(file_path, 'w')
+      file_handle = output_fn()
     except:
       logging.error('Could not open file for writing: %s', file_path)
       return False
