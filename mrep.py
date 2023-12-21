@@ -15,7 +15,7 @@ import sys
 from typing import Callable, TextIO
 
 
-flagChoices = [
+flag_choices = [
     're.ASCII',      're.A',
     're.DEBUG',
     're.DOTALL',     're.S',
@@ -27,7 +27,7 @@ flagChoices = [
 ]
 
 
-def defineFlags() -> argparse.Namespace:
+def define_flags() -> argparse.Namespace:
   parser = argparse.ArgumentParser(description=__doc__)
   # See: http://docs.python.org/3/library/argparse.html
   parser.add_argument(
@@ -84,13 +84,12 @@ def defineFlags() -> argparse.Namespace:
   parser.add_argument(
       '-f', '--flag',
       action='append',
-      choices=flagChoices,
+      choices=flag_choices,
       default=[],
-      nargs=1,
       type=str,
       metavar='RegexFlag',
       help=('See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
-            'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flagChoices))),
+            'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flag_choices))),
   )
   # Misc patterns
   parser.add_argument(
@@ -115,6 +114,15 @@ def defineFlags() -> argparse.Namespace:
       help=('Replacement string. If --regexp is enabled, you can reference capturing groups with '
             r'\1, \2, etc.'),
   )
+  parser.add_argument(
+      '-x', '--func',
+      action='store',
+      default=None,
+      type=str,
+      metavar='LAMBDA',
+      help='Lambda function body that takes a single argument (found str)',
+  )
+
   # Files
   parser.add_argument(
       'files',
@@ -126,11 +134,11 @@ def defineFlags() -> argparse.Namespace:
   )
 
   args = parser.parse_args()
-  checkFlags(parser, args)
+  check_flags(parser, args)
   return args
 
 
-def checkFlags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
   # See: http://docs.python.org/3/library/argparse.html#exiting-methods
   if args.backup_format and args.backup_format.count('%s') != 1:
     parser.error('--backup_format must contain %s exactly once')
@@ -141,19 +149,30 @@ def checkFlags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> Non
   if len(args.flag) and not args.regexp:
     parser.error('--flag specified but --regexp is not (and required)')
 
-  if len(args.files) > 1 and isStdin(args.files[0]):
+  if len(args.files) > 1 and is_stdin(args.files[0]):
     parser.error('FILES contains stdin and must contain exactly one entry')
 
 
-def regexpFlags(args: argparse.Namespace) -> int:
+def regexp_flags(args: argparse.Namespace) -> int:
   flags = 0
   for f in itertools.chain.from_iterable(args.flag):
     flags |= eval(f).value
   return flags
 
 
-def isStdin(file_path: str) -> bool:
+def is_stdin(file_path: str) -> bool:
   return file_path in {'/dev/stdin', '-'}
+
+
+def regexp_replace_with_fn(search: str, replace_fn: Callable[[re.Match[str]], str], file_contents: str, flags: int = 0) -> str:
+  buf = io.StringIO()
+  end = 0
+  for m in re.finditer(search, file_contents, flags=flags):
+    buf.write(file_contents[end:m.start()])
+    buf.write(replace_fn(m))
+    end = m.end()
+  buf.write(file_contents[end:])
+  return buf.getvalue()
 
 
 class Replacer(object):
@@ -164,15 +183,15 @@ class Replacer(object):
 
   def __init__(self, args: argparse.Namespace):
     self.args = args
-    self.flags = regexpFlags(args)
+    self.flags = regexp_flags(args)
 
-  def replaceOne(self, file_path: str) -> bool:
+  def replace_one(self, file_path: str) -> bool:
     """Replace text in the given file."""
     file_contents: str
     output_fn: Callable[[], TextIO]
     file_handle: TextIO
 
-    if isStdin(file_path):
+    if is_stdin(file_path):
       file_contents = sys.stdin.read()
       output_fn = lambda: sys.stdout
     else:
@@ -195,12 +214,18 @@ class Replacer(object):
       replacement = replacement.encode('utf-8').decode('unicode_escape')
 
     if self.args.regexp:
-      new_file_contents = re.sub(search, replacement, file_contents, flags=self.flags)
+      #new_file_contents = re.sub(search, replacement, file_contents, flags=self.flags)
+      fn: Callable[[re.Match[str]], str]
+      if self.args.func:
+        fn = eval(self.args.func, {'replacement': replacement})
+      else:
+        fn = lambda m: m.expand(replacement)
+      new_file_contents = regexp_replace_with_fn(search, fn, file_contents, flags=self.flags)
     else:
       new_file_contents = file_contents.replace(search, replacement)
 
     if file_contents == new_file_contents:
-      logging.warning('Nothing replaced: %s', file_path)
+      logging.debug('Nothing replaced: %s', file_path)
       return True
 
     if self.args.backup and self.args.backup_format and not self.args.diff:
@@ -237,7 +262,7 @@ class Replacer(object):
     """Replace text in all files."""
     errors = False
     for file_path in self.args.files:
-      if not self.replaceOne(file_path):
+      if not self.replace_one(file_path):
         errors = True
     return not errors
 
@@ -250,7 +275,7 @@ def main(args: argparse.Namespace) -> int:
 
 
 if __name__ == '__main__':
-  a = defineFlags()
+  a = define_flags()
   logging.basicConfig(
       level=a.verbosity,
       datefmt='%Y/%m/%d %H:%M:%S',
