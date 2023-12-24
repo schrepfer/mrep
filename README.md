@@ -6,8 +6,8 @@ My REPlace (MREP): Replaces occurrences of text within a file.
 
 ```
 usage: mrep.py [-h] [-v LEVEL] [-V] [-b] [--backup_format FORMAT] [-n]
-               [--diff_context LINES] [-r] [-f RegexFlag] [-e]
-               SEARCH REPLACEMENT FILE [FILE ...]
+               [--diff_context LINES] [-r] [-f RegexFlag] [-e] [-x LAMBDA]
+               SEARCH REPLACEMENT [FILE ...]
 
 My REPlace (MREP): Replaces occurrences of text within a file.
 
@@ -17,7 +17,7 @@ positional arguments:
                         reference capturing groups with \1, \2, etc.
   FILE                  Files to consider in the search replacement.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -v LEVEL, --verbosity LEVEL
                         The logging verbosity.
@@ -43,6 +43,9 @@ options:
                         re.NOFLAG, re.VERBOSE
   -e, --escape          Enable usage of backslash escapes. Useful if you want
                         to replace \r, etc.
+  -x LAMBDA, --func LAMBDA
+                        Lambda function body that takes a single argument
+                        (found str)
 ```
 
 ## Examples

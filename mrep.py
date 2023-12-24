@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import sys
+import types
 
 from typing import Callable, TextIO
 
@@ -152,6 +153,9 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
   if len(args.files) > 1 and is_stdin(args.files[0]):
     parser.error('FILES contains stdin and must contain exactly one entry')
 
+  if args.func and not args.regexp:
+    parser.error('FUNC set but --regexp is not set (and required)')
+
 
 def regexp_flags(args: argparse.Namespace) -> int:
   flags = 0
@@ -164,7 +168,11 @@ def is_stdin(file_path: str) -> bool:
   return file_path in {'/dev/stdin', '-'}
 
 
-def regexp_replace_with_fn(search: str, replace_fn: Callable[[re.Match[str]], str], file_contents: str, flags: int = 0) -> str:
+def regexp_replace_with_fn(
+        search: str,
+        replace_fn: Callable[[re.Match[str]], str],
+        file_contents: str,
+        flags: int = 0) -> str:
   buf = io.StringIO()
   end = 0
   for m in re.finditer(search, file_contents, flags=flags):
@@ -173,6 +181,10 @@ def regexp_replace_with_fn(search: str, replace_fn: Callable[[re.Match[str]], st
     end = m.end()
   buf.write(file_contents[end:])
   return buf.getvalue()
+
+
+num_fake_matches = 20
+fake_re_match = re.match(r'(.)'*num_fake_matches, 'X'*num_fake_matches)
 
 
 class Replacer(object):
@@ -220,6 +232,17 @@ class Replacer(object):
         fn = eval(self.args.func, {'replacement': replacement})
       else:
         fn = lambda m: m.expand(replacement)
+      # Simple check to verify that the function returns a string.
+      if not isinstance(fn, types.LambdaType):
+        logging.fatal('Replacement func must be of the format: `lambda m: str(...)`')
+        return False
+      try:
+        if not isinstance(fn(fake_re_match), str):
+          logging.fatal('Lambda func does not return a string')
+          return False
+      except TypeError:
+        logging.fatal('Lambda func should have exactly 1 argument of type re.Match')
+        return False
       new_file_contents = regexp_replace_with_fn(search, fn, file_contents, flags=self.flags)
     else:
       new_file_contents = file_contents.replace(search, replacement)
