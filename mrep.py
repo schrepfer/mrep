@@ -13,7 +13,7 @@ import shutil
 import sys
 import types
 
-from typing import Callable, TextIO
+from typing import Callable, Optional, TextIO, Union
 
 
 flag_choices = [
@@ -168,6 +168,26 @@ def is_stdin(file_path: str) -> bool:
   return file_path in {'/dev/stdin', '-'}
 
 
+class FakeMatch(object):
+
+  def __getattr__(self, attr):
+    raise AttributeError(f're.Match method not supported: {attr}(...)')
+
+  def expand(self, template: str) -> str:
+    return 'expand()'
+
+  def group(self, *groups) -> Union[tuple[str, ...], str]:
+    if len(groups) > 1:
+      return tuple(f'group{g}()' for g in groups)
+    return 'group0()'
+
+  def groups(self, default: Optional[str] = None) -> tuple[str, ...]:
+    return tuple(f'groups{x}()' for x in range(20))
+
+  def groupdict(self, default: Optional[str] = None) -> dict[str, str]:
+    return {}
+
+
 def regexp_replace_with_fn(
         search: str,
         replace_fn: Callable[[re.Match[str]], str],
@@ -181,10 +201,6 @@ def regexp_replace_with_fn(
     end = m.end()
   buf.write(file_contents[end:])
   return buf.getvalue()
-
-
-num_fake_matches = 20
-fake_re_match = re.match(r'(.)'*num_fake_matches, 'X'*num_fake_matches)
 
 
 class Replacer(object):
@@ -237,11 +253,14 @@ class Replacer(object):
         logging.fatal('Replacement func must be of the format: `lambda m: str(...)`')
         return False
       try:
-        if not isinstance(fn(fake_re_match), str):
+        if not isinstance(fn(FakeMatch()), str):
           logging.fatal('Lambda func does not return a string')
           return False
       except TypeError:
         logging.fatal('Lambda func should have exactly 1 argument of type re.Match')
+        return False
+      except AttributeError as e:
+        logging.fatal('Fail: %s', e)
         return False
       new_file_contents = regexp_replace_with_fn(search, fn, file_contents, flags=self.flags)
     else:
