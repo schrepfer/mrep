@@ -3,6 +3,7 @@
 """My REPlace (MREP): Replaces occurrences of text within a file."""
 
 import argparse
+import asyncio
 import difflib
 import io
 import itertools
@@ -156,6 +157,24 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
   if args.func and not args.regexp:
     parser.error('FUNC set but --regexp is not set (and required)')
 
+  if args.regexp and args.func:
+    fn = get_replace_fn(args, '')
+    if not isinstance(fn, types.LambdaType):
+      parser.error('Replacement func must be of the format: `lambda m: str(...)`')
+    try:
+      if not isinstance(fn(FakeMatch()), str):
+        parser.error('Lambda func does not return a string')
+    except TypeError:
+      parser.error('Lambda func should have exactly 1 argument of type re.Match')
+    except AttributeError as e:
+      parser.error(f'Fail: {e}')
+
+
+def get_replace_fn(args: argparse.Namespace, replacement: str) -> Callable[[re.Match[str]], str]:
+  if args.func:
+    return eval(args.func, {'replacement': replacement})
+  return lambda m: m.expand(replacement)
+
 
 def regexp_flags(args: argparse.Namespace) -> int:
   flags = 0
@@ -213,7 +232,7 @@ class Replacer(object):
     self.args = args
     self.flags = regexp_flags(args)
 
-  def replace_one(self, file_path: str) -> bool:
+  async def replace_one(self, file_path: str) -> bool:
     """Replace text in the given file."""
     file_contents: str
     output_fn: Callable[[], TextIO]
@@ -242,27 +261,11 @@ class Replacer(object):
       replacement = replacement.encode('utf-8').decode('unicode_escape')
 
     if self.args.regexp:
-      #new_file_contents = re.sub(search, replacement, file_contents, flags=self.flags)
-      fn: Callable[[re.Match[str]], str]
-      if self.args.func:
-        fn = eval(self.args.func, {'replacement': replacement})
-      else:
-        fn = lambda m: m.expand(replacement)
-      # Simple check to verify that the function returns a string.
-      if not isinstance(fn, types.LambdaType):
-        logging.fatal('Replacement func must be of the format: `lambda m: str(...)`')
-        return False
-      try:
-        if not isinstance(fn(FakeMatch()), str):
-          logging.fatal('Lambda func does not return a string')
-          return False
-      except TypeError:
-        logging.fatal('Lambda func should have exactly 1 argument of type re.Match')
-        return False
-      except AttributeError as e:
-        logging.fatal('Fail: %s', e)
-        return False
-      new_file_contents = regexp_replace_with_fn(search, fn, file_contents, flags=self.flags)
+      new_file_contents = regexp_replace_with_fn(
+          search,
+          get_replace_fn(self.args, replacement),
+          file_contents,
+          flags=self.flags)
     else:
       new_file_contents = file_contents.replace(search, replacement)
 
@@ -300,19 +303,17 @@ class Replacer(object):
 
     return True
 
-  def replace(self) -> bool:
+  async def replace(self) -> bool:
     """Replace text in all files."""
-    errors = False
-    for file_path in self.args.files:
-      if not self.replace_one(file_path):
-        errors = True
-    return not errors
+    coroutines = [self.replace_one(f) for f in self.args.files]
+    return all(await asyncio.gather(*coroutines))
 
 
 def main(args: argparse.Namespace) -> int:
-  if not Replacer(args).replace():
+  loop = asyncio.get_event_loop()
+  retvals = loop.run_until_complete(asyncio.gather(Replacer(args).replace()))
+  if not all(retvals):
     return os.EX_DATAERR
-
   return os.EX_OK
 
 
