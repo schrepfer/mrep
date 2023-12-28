@@ -154,13 +154,13 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
   if len(args.files) > 1 and is_stdin(args.files[0]):
     parser.error('FILES contains stdin and must contain exactly one entry')
 
-  if args.func and not args.regexp:
-    parser.error('FUNC set but --regexp is not set (and required)')
+  if args.func:
+    if not args.regexp:
+      parser.error('--func set but --regexp is not set (and required)')
 
-  if args.regexp and args.func:
     fn = get_replace_fn(args, '')
     if not isinstance(fn, types.LambdaType):
-      parser.error('Replacement func must be of the format: `lambda m: str(...)`')
+      parser.error('Replacement func must be of the type: `Callable[[re.Match[str]], str]`, e.g., `lambda m: m.group(0)`')
     try:
       if not isinstance(fn(FakeMatch()), str):
         parser.error('Lambda func does not return a string')
