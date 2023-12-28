@@ -68,3 +68,10 @@ options:
     ```
      mrep -b --backup_format='%s.old' 'spec.Run()' 'setup.RunSpec(ctx, p.Opts, spec)' *.go
     ```
+
+1.  Replace all words (\w) with the capitalized version of that value. The
+    lambda takes the 0 group (which is the full matched string) and uppers it.
+
+    ```
+    mrep -r -x 'lambda m: m.group(0).upper()' '\w+:' '' *.py
+    ```
