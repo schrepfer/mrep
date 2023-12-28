@@ -158,14 +158,17 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
     if not args.regexp:
       parser.error('--func set but --regexp is not set (and required)')
 
-    fn = get_replace_fn(args, '')
-    if not isinstance(fn, types.LambdaType):
-      parser.error('Replacement func must be of the type: `Callable[[re.Match[str]], str]`, e.g., `lambda m: m.group(0)`')
+    try:
+      fn = get_replace_fn(args, '')
+      if not isinstance(fn, types.LambdaType):
+        parser.error('--func must be of the type: `Callable[[re.Match[str]], str]`, e.g., `lambda m: m.group(0)`')
+    except SyntaxError as e:
+      parser.error(f'SyntaxError from --func: {e}')
     try:
       if not isinstance(fn(FakeMatch()), str):
-        parser.error('Lambda func does not return a string')
+        parser.error('--func lambda does not return a valid str')
     except TypeError:
-      parser.error('Lambda func should have exactly 1 argument of type re.Match')
+      parser.error('--func lambda should have exactly 1 argument of type re.Match[str]')
     except AttributeError as e:
       parser.error(f'Fail: {e}')
 
