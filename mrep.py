@@ -117,12 +117,14 @@ def define_flags() -> argparse.Namespace:
             r'\1, \2, etc.'),
   )
   parser.add_argument(
-      '-x', '--func',
+      '-x', '--func', '--lambda',
       action='store',
       default=None,
       type=str,
       metavar='LAMBDA',
-      help='Lambda function body that takes a single argument (found str)',
+      help=('A lambda function body that takes a single argument (related `re.Match[str]`). '
+            'E.g. `lambda m: m.group(1)`. You may also reference the `replacement` global variable '
+            'which contains the value of the REPLACEMENT metavar provided.'),
   )
 
   # Files

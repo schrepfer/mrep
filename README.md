@@ -17,7 +17,7 @@ positional arguments:
                         reference capturing groups with \1, \2, etc.
   FILE                  Files to consider in the search replacement.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v LEVEL, --verbosity LEVEL
                         The logging verbosity.
@@ -43,9 +43,12 @@ optional arguments:
                         re.NOFLAG, re.VERBOSE
   -e, --escape          Enable usage of backslash escapes. Useful if you want
                         to replace \r, etc.
-  -x LAMBDA, --func LAMBDA
-                        Lambda function body that takes a single argument
-                        (found str)
+  -x LAMBDA, --func LAMBDA, --lambda LAMBDA
+                        A lambda function body that takes a single argument
+                        (related `re.Match[str]`). E.g. `lambda m:
+                        m.group(1)`. You may also reference the `replacement`
+                        global variable which contains the value of the
+                        REPLACEMENT metavar provided.
 ```
 
 ## Examples
