@@ -122,7 +122,7 @@ def define_flags() -> argparse.Namespace:
       default=None,
       type=str,
       metavar='LAMBDA',
-      help=('A lambda function body that takes a single argument (related `re.Match[str]`). '
+      help=('A lambda function body that takes a single argument (an `re.Match[str]` object). '
             'E.g. `lambda m: m.group(1)`. You may also reference the `replacement` global variable '
             'which contains the value of the REPLACEMENT metavar provided.'),
   )
@@ -163,14 +163,18 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
     try:
       fn = get_replace_fn(args, '')
       if not isinstance(fn, types.LambdaType):
-        parser.error('--func must be of the type: `Callable[[re.Match[str]], str]`, e.g., `lambda m: m.group(0)`')
+        parser.error('--func must be a lambda that takes exactly 1 argument of type '
+                     '`re.Match[str]` and returns a `str`, E.g., '
+                     '`lambda m: m.group(0)`')
     except SyntaxError as e:
       parser.error(f'SyntaxError from --func: {e}')
     try:
       if not isinstance(fn(FakeMatch()), str):
-        parser.error('--func lambda does not return a valid str')
+        parser.error('--func lambda must return value of type `str`')
     except TypeError:
-      parser.error('--func lambda should have exactly 1 argument of type re.Match[str]')
+      parser.error('--func must be a lambda that takes exactly 1 argument of type '
+                      '`re.Match[str]` and returns a `str`, E.g., '
+                      '`lambda m: m.group(0)`')
     except AttributeError as e:
       parser.error(f'Fail: {e}')
 
