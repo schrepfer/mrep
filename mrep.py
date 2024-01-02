@@ -45,6 +45,7 @@ def define_flags() -> argparse.Namespace:
       action='version',
       version='%(prog)s version 0.2',
   )
+
   # Backup
   parser.add_argument(
       '-b', '--backup',
@@ -60,6 +61,7 @@ def define_flags() -> argparse.Namespace:
       metavar='FORMAT',
       help='Backup files in this format; %%s is expanded to the current file name.',
   )
+
   # Diff
   parser.add_argument(
       '-n', '--diff',
@@ -75,6 +77,7 @@ def define_flags() -> argparse.Namespace:
       metavar='LINES',
       help='The amount of context to show in unified diffs.',
   )
+
   # Regexp
   parser.add_argument( '-r', '--regexp', '--regex', '--re',
       action='store_true',
@@ -93,6 +96,7 @@ def define_flags() -> argparse.Namespace:
       help=('See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
             'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flag_choices))),
   )
+
   # Misc patterns
   parser.add_argument(
       '-e', '--escape',
@@ -100,6 +104,7 @@ def define_flags() -> argparse.Namespace:
       default=False,
       help='Enable usage of backslash escapes. Useful if you want to replace \\r, etc.',
   )
+
   # Replacements
   parser.add_argument(
       'search',
@@ -112,9 +117,10 @@ def define_flags() -> argparse.Namespace:
       'replacement',
       nargs=1,
       type=str,
+      default=[''],
       metavar='REPLACEMENT',
       help=('Replacement string. If --regexp is enabled, you can reference capturing groups with '
-            r'\1, \2, etc.'),
+            r'\1, \2, etc. or use --func to process the `re.Match[str]`.'),
   )
   parser.add_argument(
       '-x', '--func', '--lambda',
@@ -130,7 +136,7 @@ def define_flags() -> argparse.Namespace:
   # Files
   parser.add_argument(
       'files',
-      nargs='*',
+      nargs='+',
       type=str,
       metavar='FILE',
       default=['-'],
@@ -177,6 +183,10 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
                       '`lambda m: m.group(0)`')
     except AttributeError as e:
       parser.error(f'Fail: {e}')
+
+  else:
+    if args.replacement[0] == '':
+      parser.error('REPLACEMENT required when --func not specified')
 
 
 def get_replace_fn(args: argparse.Namespace, replacement: str) -> Callable[[re.Match[str]], str]:
