@@ -7,14 +7,15 @@ My REPlace (MREP): Replaces occurrences of text within a file.
 ```
 usage: mrep.py [-h] [-v LEVEL] [-V] [-b] [--backup_format FORMAT] [-n]
                [--diff_context LINES] [-r] [-f RegexFlag] [-e] [-x LAMBDA]
-               SEARCH REPLACEMENT [FILE ...]
+               SEARCH REPLACEMENT FILE [FILE ...]
 
 My REPlace (MREP): Replaces occurrences of text within a file.
 
 positional arguments:
   SEARCH                Search string or pattern.
   REPLACEMENT           Replacement string. If --regexp is enabled, you can
-                        reference capturing groups with \1, \2, etc.
+                        reference capturing groups with \1, \2, etc. or use
+                        --func to process the `re.Match[str]`.
   FILE                  Files to consider in the search replacement.
 
 options:
@@ -45,7 +46,7 @@ options:
                         to replace \r, etc.
   -x LAMBDA, --func LAMBDA, --lambda LAMBDA
                         A lambda function body that takes a single argument
-                        (related `re.Match[str]`). E.g. `lambda m:
+                        (an `re.Match[str]` object). E.g. `lambda m:
                         m.group(1)`. You may also reference the `replacement`
                         global variable which contains the value of the
                         REPLACEMENT metavar provided.
