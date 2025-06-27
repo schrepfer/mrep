@@ -13,19 +13,24 @@ import re
 import shutil
 import sys
 import types
-
 from typing import Callable, Optional, TextIO, Union
 
 
 flag_choices = [
-    're.ASCII',      're.A',
+    're.ASCII',
+    're.A',
     're.DEBUG',
-    're.DOTALL',     're.S',
-    're.IGNORECASE', 're.I',
-    're.LOCALE',     're.L',
-    're.MULTILINE',  're.M',
+    're.DOTALL',
+    're.S',
+    're.IGNORECASE',
+    're.I',
+    're.LOCALE',
+    're.L',
+    're.MULTILINE',
+    're.M',
     're.NOFLAG',
-    're.VERBOSE',    're.X',
+    're.VERBOSE',
+    're.X',
 ]
 
 
@@ -33,7 +38,8 @@ def define_flags() -> argparse.Namespace:
   parser = argparse.ArgumentParser(description=__doc__)
   # See: http://docs.python.org/3/library/argparse.html
   parser.add_argument(
-      '-v', '--verbosity',
+      '-v',
+      '--verbosity',
       action='store',
       default=logging.WARNING,
       type=int,
@@ -41,17 +47,22 @@ def define_flags() -> argparse.Namespace:
       help='The logging verbosity.',
   )
   parser.add_argument(
-      '-V', '--version',
+      '-V',
+      '--version',
       action='version',
       version='%(prog)s version 0.2',
   )
 
   # Backup
   parser.add_argument(
-      '-b', '--backup',
+      '-b',
+      '--backup',
       action='store_true',
       default=False,
-      help='Backup files being modified. See --backup_format for options on the format.',
+      help=(
+          'Backup files being modified. See --backup_format for options on the'
+          ' format.'
+      ),
   )
   parser.add_argument(
       '--backup_format',
@@ -59,12 +70,16 @@ def define_flags() -> argparse.Namespace:
       default='%s~',
       type=str,
       metavar='FORMAT',
-      help='Backup files in this format; %%s is expanded to the current file name.',
+      help=(
+          'Backup files in this format; %%s is expanded to the current file'
+          ' name.'
+      ),
   )
 
   # Diff
   parser.add_argument(
-      '-n', '--diff',
+      '-n',
+      '--diff',
       action='store_true',
       default=False,
       help='Diff the proposed changes only. Do not actually touch the files.',
@@ -79,30 +94,46 @@ def define_flags() -> argparse.Namespace:
   )
 
   # Regexp
-  parser.add_argument( '-r', '--regexp', '--regex', '--re',
+  parser.add_argument(
+      '-r',
+      '--regexp',
+      '--regex',
+      '--re',
       action='store_true',
       default=False,
-      help=('Make the search string a regexp pattern. With this option you can use regexp '
-            'capturing groups, and reference those values in the replacement with '
-            r'\1, \2, etc.'),
+      help=(
+          'Make the search string a regexp pattern. With this option you can'
+          ' use regexp '
+          'capturing groups, and reference those values in the replacement'
+          ' with '
+          r'\1, \2, etc.'
+      ),
   )
   parser.add_argument(
-      '-f', '--flag',
+      '-f',
+      '--flag',
       action='append',
       choices=flag_choices,
       default=[],
       type=str,
       metavar='RegexFlag',
-      help=('See https://docs.python.org/3/library/re.html#re.RegexFlag for options. '
-            'RegexFlags: ' + ', '.join(filter(lambda x: len(x) > 4, flag_choices))),
+      help=(
+          'See https://docs.python.org/3/library/re.html#re.RegexFlag for'
+          ' options. RegexFlags: '
+          + ', '.join(filter(lambda x: len(x) > 4, flag_choices))
+      ),
   )
 
   # Misc patterns
   parser.add_argument(
-      '-e', '--escape',
+      '-e',
+      '--escape',
       action='store_true',
       default=False,
-      help='Enable usage of backslash escapes. Useful if you want to replace \\r, etc.',
+      help=(
+          'Enable usage of backslash escapes. Useful if you want to replace'
+          ' \\r, etc.'
+      ),
   )
 
   # Replacements
@@ -119,18 +150,26 @@ def define_flags() -> argparse.Namespace:
       type=str,
       default=[''],
       metavar='REPLACEMENT',
-      help=('Replacement string. If --regexp is enabled, you can reference capturing groups with '
-            r'\1, \2, etc. or use --func to process the `re.Match[str]`.'),
+      help=(
+          'Replacement string. If --regexp is enabled, you can reference'
+          ' capturing groups with '
+          r'\1, \2, etc. or use --func to process the `re.Match[str]`.'
+      ),
   )
   parser.add_argument(
-      '-x', '--func', '--lambda',
+      '-x',
+      '--func',
+      '--lambda',
       action='store',
       default=None,
       type=str,
       metavar='LAMBDA',
-      help=('A lambda function body that takes a single argument (an `re.Match[str]` object). '
-            'E.g. `lambda m: m.group(1)`. You may also reference the `replacement` global variable '
-            'which contains the value of the REPLACEMENT metavar provided.'),
+      help=(
+          'A lambda function body that takes a single argument (an'
+          ' `re.Match[str]` object). E.g. `lambda m: m.group(1)`. You may also'
+          ' reference the `replacement` global variable which contains the'
+          ' value of the REPLACEMENT metavar provided.'
+      ),
   )
 
   # Files
@@ -148,7 +187,9 @@ def define_flags() -> argparse.Namespace:
   return args
 
 
-def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+def check_flags(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> None:
   # See: http://docs.python.org/3/library/argparse.html#exiting-methods
   if args.backup_format and args.backup_format.count('%s') != 1:
     parser.error('--backup_format must contain %s exactly once')
@@ -169,27 +210,29 @@ def check_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> No
     try:
       fn = get_replace_fn(args, '')
       if not isinstance(fn, types.LambdaType):
-        parser.error('--func must be a lambda that takes exactly 1 argument of type '
-                     '`re.Match[str]` and returns a `str`, E.g., '
-                     '`lambda m: m.group(0)`')
+        parser.error(
+            '--func must be a lambda that takes exactly 1 argument of type '
+            '`re.Match[str]` and returns a `str`, E.g., '
+            '`lambda m: m.group(0)`'
+        )
     except SyntaxError as e:
       parser.error(f'SyntaxError from --func: {e}')
     try:
       if not isinstance(fn(FakeMatch()), str):
         parser.error('--func lambda must return value of type `str`')
     except TypeError:
-      parser.error('--func must be a lambda that takes exactly 1 argument of type '
-                      '`re.Match[str]` and returns a `str`, E.g., '
-                      '`lambda m: m.group(0)`')
+      parser.error(
+          '--func must be a lambda that takes exactly 1 argument of type '
+          '`re.Match[str]` and returns a `str`, E.g., '
+          '`lambda m: m.group(0)`'
+      )
     except AttributeError as e:
       parser.error(f'Fail: {e}')
 
-  else:
-    if args.replacement[0] == '':
-      parser.error('REPLACEMENT required when --func not specified')
 
-
-def get_replace_fn(args: argparse.Namespace, replacement: str) -> Callable[[re.Match[str]], str]:
+def get_replace_fn(
+    args: argparse.Namespace, replacement: str
+) -> Callable[[re.Match[str]], str]:
   if args.func:
     return eval(args.func, {'replacement': replacement})
   return lambda m: m.expand(replacement)
@@ -227,14 +270,15 @@ class FakeMatch(object):
 
 
 def regexp_replace_with_fn(
-        search: str,
-        replace_fn: Callable[[re.Match[str]], str],
-        file_contents: str,
-        flags: int = 0) -> str:
+    search: str,
+    replace_fn: Callable[[re.Match[str]], str],
+    file_contents: str,
+    flags: int = 0,
+) -> str:
   buf = io.StringIO()
   end = 0
   for m in re.finditer(search, file_contents, flags=flags):
-    buf.write(file_contents[end:m.start()])
+    buf.write(file_contents[end : m.start()])
     buf.write(replace_fn(m))
     end = m.end()
   buf.write(file_contents[end:])
@@ -284,7 +328,8 @@ class Replacer(object):
           search,
           get_replace_fn(self.args, replacement),
           file_contents,
-          flags=self.flags)
+          flags=self.flags,
+      )
     else:
       new_file_contents = file_contents.replace(search, replacement)
 
@@ -298,17 +343,25 @@ class Replacer(object):
         shutil.copyfile(file_path, backup_file_path)
         logging.info('Created backup for %s: %s', file_path, backup_file_path)
       except:
-        logging.error('Could not create backup for %s, skipping: %s', file_path, backup_file_path)
+        logging.error(
+            'Could not create backup for %s, skipping: %s',
+            file_path,
+            backup_file_path,
+        )
         return False
 
     if self.args.diff:
-      print('\n'.join(difflib.unified_diff(
-          file_contents.split('\n'),
-          new_file_contents.split('\n'),
-          fromfile='before',
-          tofile='after',
-          n=self.args.diff_context,
-      )))
+      print(
+          '\n'.join(
+              difflib.unified_diff(
+                  file_contents.split('\n'),
+                  new_file_contents.split('\n'),
+                  fromfile='before',
+                  tofile='after',
+                  n=self.args.diff_context,
+              )
+          )
+      )
       return True
 
     try:
@@ -329,7 +382,8 @@ class Replacer(object):
 
 
 def main(args: argparse.Namespace) -> int:
-  loop = asyncio.get_event_loop()
+  loop = asyncio.new_event_loop()
+  asyncio.set_event_loop(loop)
   retvals = loop.run_until_complete(asyncio.gather(Replacer(args).replace()))
   if not all(retvals):
     return os.EX_DATAERR
@@ -341,5 +395,6 @@ if __name__ == '__main__':
   logging.basicConfig(
       level=a.verbosity,
       datefmt='%Y/%m/%d %H:%M:%S',
-      format='[%(asctime)s] %(levelname)s: %(message)s')
+      format='[%(asctime)s] %(levelname)s: %(message)s',
+  )
   sys.exit(main(a))
